@@ -1,0 +1,1121 @@
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, TextInput, Alert, ScrollView, FlatList, Modal } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+
+const Stack = createStackNavigator();
+const Tab = createBottomTabNavigator();
+
+// Sample data
+const sampleGroups = [
+  { id: '1', name: 'Monthly Savers', members: 12, amount: 5000, nextPayout: 'Jan 15' },
+  { id: '2', name: 'Family Circle', members: 8, amount: 10000, nextPayout: 'Jan 22' },
+  { id: '3', name: 'Business Partners', members: 15, amount: 20000, nextPayout: 'Feb 5' },
+];
+
+const sampleMembers = {
+  '1': [
+    { id: '1', name: 'John Doe (You)', position: 1, contributed: 15000, status: 'active' },
+    { id: '2', name: 'Jane Smith', position: 2, contributed: 15000, status: 'active' },
+    { id: '3', name: 'Mike Johnson', position: 3, contributed: 10000, status: 'active' },
+    { id: '4', name: 'Sarah Wilson', position: 4, contributed: 15000, status: 'active' },
+    { id: '5', name: 'David Brown', position: 5, contributed: 15000, status: 'active' },
+    { id: '6', name: 'Lisa Davis', position: 6, contributed: 15000, status: 'active' },
+    { id: '7', name: 'Tom Miller', position: 7, contributed: 10000, status: 'active' },
+    { id: '8', name: 'Amy Garcia', position: 8, contributed: 15000, status: 'active' },
+    { id: '9', name: 'Chris Lee', position: 9, contributed: 15000, status: 'active' },
+    { id: '10', name: 'Emma Taylor', position: 10, contributed: 15000, status: 'active' },
+    { id: '11', name: 'Ryan Clark', position: 11, contributed: 5000, status: 'active' },
+    { id: '12', name: 'Sofia Rodriguez', position: 12, contributed: 15000, status: 'active' },
+  ],
+  '2': [
+    { id: '1', name: 'John Doe (You)', position: 1, contributed: 30000, status: 'active' },
+    { id: '2', name: 'Mary Smith', position: 2, contributed: 30000, status: 'active' },
+    { id: '3', name: 'Robert Johnson', position: 3, contributed: 20000, status: 'active' },
+    { id: '4', name: 'Jennifer Brown', position: 4, contributed: 30000, status: 'active' },
+    { id: '5', name: 'William Davis', position: 5, contributed: 30000, status: 'active' },
+    { id: '6', name: 'Linda Wilson', position: 6, contributed: 30000, status: 'active' },
+    { id: '7', name: 'James Miller', position: 7, contributed: 20000, status: 'active' },
+    { id: '8', name: 'Patricia Garcia', position: 8, contributed: 30000, status: 'active' },
+  ],
+  '3': [
+    { id: '1', name: 'John Doe (You)', position: 1, contributed: 60000, status: 'active' },
+    { id: '2', name: 'Alice Cooper', position: 2, contributed: 60000, status: 'active' },
+    { id: '3', name: 'Bob Anderson', position: 3, contributed: 40000, status: 'active' },
+    { id: '4', name: 'Carol White', position: 4, contributed: 60000, status: 'active' },
+    { id: '5', name: 'Daniel Harris', position: 5, contributed: 60000, status: 'active' },
+    { id: '6', name: 'Eva Martinez', position: 6, contributed: 60000, status: 'active' },
+    { id: '7', name: 'Frank Thompson', position: 7, contributed: 40000, status: 'active' },
+    { id: '8', name: 'Grace Jackson', position: 8, contributed: 60000, status: 'active' },
+    { id: '9', name: 'Henry Lewis', position: 9, contributed: 60000, status: 'active' },
+    { id: '10', name: 'Ivy Walker', position: 10, contributed: 60000, status: 'active' },
+    { id: '11', name: 'Jack Hall', position: 11, contributed: 40000, status: 'active' },
+    { id: '12', name: 'Kate Young', position: 12, contributed: 60000, status: 'active' },
+    { id: '13', name: 'Leo King', position: 13, contributed: 60000, status: 'active' },
+    { id: '14', name: 'Mia Scott', position: 14, contributed: 40000, status: 'active' },
+    { id: '15', name: 'Noah Green', position: 15, contributed: 60000, status: 'active' },
+  ]
+};
+
+const samplePayments = [
+  { id: '1', group: 'Monthly Savers', amount: 5000, date: '2024-01-01', status: 'Paid' },
+  { id: '2', group: 'Family Circle', amount: 10000, date: '2024-01-01', status: 'Paid' },
+  { id: '3', group: 'Business Partners', amount: 20000, date: '2024-01-15', status: 'Pending' },
+];
+
+// Login Screen
+function LoginScreen({ navigation }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleLogin = () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+    // For now, just navigate to main app
+    navigation.navigate('Main');
+  };
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Welcome Back!</Text>
+      <Text style={styles.subtitle}>Login to Ajoturn</Text>
+      
+      <View style={styles.formContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          placeholderTextColor="#9ca3af"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+        
+        <View style={styles.passwordContainer}>
+          <TextInput
+            style={styles.passwordInput}
+            placeholder="Password"
+            placeholderTextColor="#9ca3af"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!showPassword}
+          />
+          <TouchableOpacity 
+            style={styles.eyeButton}
+            onPress={() => setShowPassword(!showPassword)}
+          >
+            <Text style={styles.eyeText}>{showPassword ? '🙈' : '👁️'}</Text>
+          </TouchableOpacity>
+        </View>
+        
+        <TouchableOpacity 
+          style={styles.button}
+          onPress={handleLogin}
+        >
+          <Text style={styles.buttonText}>Login</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={styles.linkButton}
+          onPress={() => navigation.navigate('Signup')}
+        >
+          <Text style={styles.linkText}>Don't have an account? Sign Up</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+// Signup Screen
+function SignupScreen({ navigation }) {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const handleSignup = () => {
+    if (!name || !email || !password || !confirmPassword) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+    if (password !== confirmPassword) {
+      Alert.alert('Error', 'Passwords do not match');
+      return;
+    }
+    // For now, just navigate to main app
+    navigation.navigate('Main');
+  };
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Join Ajoturn</Text>
+      <Text style={styles.subtitle}>Create your account</Text>
+      
+      <View style={styles.formContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Full Name"
+          placeholderTextColor="#9ca3af"
+          value={name}
+          onChangeText={setName}
+        />
+        
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          placeholderTextColor="#9ca3af"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+        
+        <View style={styles.passwordContainer}>
+          <TextInput
+            style={styles.passwordInput}
+            placeholder="Password"
+            placeholderTextColor="#9ca3af"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!showPassword}
+          />
+          <TouchableOpacity 
+            style={styles.eyeButton}
+            onPress={() => setShowPassword(!showPassword)}
+          >
+            <Text style={styles.eyeText}>{showPassword ? '🙈' : '👁️'}</Text>
+          </TouchableOpacity>
+        </View>
+        
+        <View style={styles.passwordContainer}>
+          <TextInput
+            style={styles.passwordInput}
+            placeholder="Confirm Password"
+            placeholderTextColor="#9ca3af"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            secureTextEntry={!showConfirmPassword}
+          />
+          <TouchableOpacity 
+            style={styles.eyeButton}
+            onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+          >
+            <Text style={styles.eyeText}>{showConfirmPassword ? '🙈' : '👁️'}</Text>
+          </TouchableOpacity>
+        </View>
+        
+        <TouchableOpacity 
+          style={styles.button}
+          onPress={handleSignup}
+        >
+          <Text style={styles.buttonText}>Sign Up</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={styles.linkButton}
+          onPress={() => navigation.navigate('Login')}
+        >
+          <Text style={styles.linkText}>Already have an account? Login</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+// Dashboard Screen
+function DashboardScreen({ navigation }) {
+  const navigateToGroup = (groupId) => {
+    navigation.navigate('GroupDetails', { groupId });
+  };
+
+  return (
+    <ScrollView style={styles.screenContainer}>
+      <View style={styles.header}>
+        <Text style={styles.screenTitle}>Dashboard</Text>
+        <Text style={styles.welcomeText}>Welcome back, User!</Text>
+      </View>
+      
+      {/* Summary Stats */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Your Groups</Text>
+        <Text style={styles.cardValue}>{sampleGroups.length} Active Groups</Text>
+      </View>
+      
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Total Contributions</Text>
+        <Text style={styles.cardValue}>₦35,000</Text>
+      </View>
+      
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Next Payout</Text>
+        <Text style={styles.cardValue}>Jan 15, 2024</Text>
+      </View>
+
+      {/* Active Groups Section */}
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Your Active Groups</Text>
+      </View>
+
+      {sampleGroups.map((group) => (
+        <TouchableOpacity
+          key={group.id}
+          style={styles.groupCard}
+          onPress={() => navigateToGroup(group.id)}
+          activeOpacity={0.7}
+        >
+          <View style={styles.groupInfo}>
+            <Text style={styles.groupName}>{group.name}</Text>
+            <Text style={styles.groupMembers}>{group.members} members</Text>
+            <Text style={styles.groupAmount}>₦{group.amount.toLocaleString()}/month</Text>
+          </View>
+          <View style={styles.groupStatus}>
+            <Text style={styles.nextPayout}>Next: {group.nextPayout}</Text>
+            <Text style={styles.tapHint}>Tap to view details</Text>
+          </View>
+        </TouchableOpacity>
+      ))}
+    </ScrollView>
+  );
+}
+
+// Groups Screen
+function GroupsScreen({ navigation }) {
+  const renderGroup = ({ item }) => (
+    <TouchableOpacity 
+      style={styles.listItem}
+      onPress={() => navigation.navigate('GroupDetails', { groupId: item.id })}
+    >
+      <Text style={styles.listTitle}>{item.name}</Text>
+      <Text style={styles.listSubtitle}>{item.members} members • ₦{item.amount.toLocaleString()}</Text>
+      <Text style={styles.listDetail}>Next payout: {item.nextPayout}</Text>
+    </TouchableOpacity>
+  );
+
+  return (
+    <View style={styles.screenContainer}>
+      <View style={styles.header}>
+        <Text style={styles.screenTitle}>My Groups</Text>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity 
+            style={styles.smallButton}
+            onPress={() => navigation.navigate('CreateGroup')}
+          >
+            <Text style={styles.smallButtonText}>+ Create</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.smallButton, { marginLeft: 10 }]}
+            onPress={() => navigation.navigate('JoinGroup')}
+          >
+            <Text style={styles.smallButtonText}>Join</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+      
+      <FlatList
+        data={sampleGroups}
+        renderItem={renderGroup}
+        keyExtractor={(item) => item.id}
+        showsVerticalScrollIndicator={false}
+      />
+    </View>
+  );
+}
+
+// Payments Screen
+function PaymentsScreen({ navigation }) {
+  const renderPayment = ({ item }) => (
+    <View style={styles.listItem}>
+      <Text style={styles.listTitle}>{item.group}</Text>
+      <Text style={styles.listSubtitle}>₦{item.amount.toLocaleString()}</Text>
+      <Text style={[styles.listDetail, item.status === 'Paid' ? styles.paidStatus : styles.pendingStatus]}>
+        {item.status} • {item.date}
+      </Text>
+    </View>
+  );
+
+  return (
+    <View style={styles.screenContainer}>
+      <View style={styles.header}>
+        <Text style={styles.screenTitle}>Payments</Text>
+        <TouchableOpacity 
+          style={styles.smallButton}
+          onPress={() => navigation.navigate('Payment', { 
+            contributionId: '1', 
+            groupId: '1', 
+            amount: 5000 
+          })}
+        >
+          <Text style={styles.smallButtonText}>Make Payment</Text>
+        </TouchableOpacity>
+      </View>
+      
+      <FlatList
+        data={samplePayments}
+        renderItem={renderPayment}
+        keyExtractor={(item) => item.id}
+        showsVerticalScrollIndicator={false}
+      />
+    </View>
+  );
+}
+
+// Profile Screen
+function ProfileScreen({ navigation }) {
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Logout', onPress: () => navigation.navigate('Login') },
+      ]
+    );
+  };
+
+  return (
+    <ScrollView style={styles.screenContainer}>
+      <View style={styles.header}>
+        <Text style={styles.screenTitle}>Profile</Text>
+      </View>
+      
+      <View style={styles.profileCard}>
+        <Text style={styles.profileName}>John Doe</Text>
+        <Text style={styles.profileEmail}>john@example.com</Text>
+      </View>
+      
+      <TouchableOpacity style={styles.profileOption}>
+        <Text style={styles.profileOptionText}>Account Settings</Text>
+      </TouchableOpacity>
+      
+      <TouchableOpacity style={styles.profileOption}>
+        <Text style={styles.profileOptionText}>Payment Methods</Text>
+      </TouchableOpacity>
+      
+      <TouchableOpacity style={styles.profileOption}>
+        <Text style={styles.profileOptionText}>Help & Support</Text>
+      </TouchableOpacity>
+      
+      <TouchableOpacity style={[styles.profileOption, styles.logoutOption]} onPress={handleLogout}>
+        <Text style={[styles.profileOptionText, styles.logoutText]}>Logout</Text>
+      </TouchableOpacity>
+    </ScrollView>
+  );
+}
+
+// Additional screens for Main Stack
+function CreateGroupScreen({ navigation }) {
+  const [groupName, setGroupName] = useState('');
+  const [contributionAmount, setContributionAmount] = useState('');
+  const [maxMembers, setMaxMembers] = useState('');
+
+  const handleCreateGroup = () => {
+    if (!groupName || !contributionAmount || !maxMembers) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+    Alert.alert('Success', 'Group created successfully!', [
+      { text: 'OK', onPress: () => navigation.goBack() }
+    ]);
+  };
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Create New Group</Text>
+      <Text style={styles.subtitle}>Set up your savings group</Text>
+      
+      <View style={styles.formContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Group Name"
+          placeholderTextColor="#9ca3af"
+          value={groupName}
+          onChangeText={setGroupName}
+        />
+        
+        <TextInput
+          style={styles.input}
+          placeholder="Contribution Amount (₦)"
+          placeholderTextColor="#9ca3af"
+          value={contributionAmount}
+          onChangeText={setContributionAmount}
+          keyboardType="numeric"
+        />
+        
+        <TextInput
+          style={styles.input}
+          placeholder="Maximum Members"
+          placeholderTextColor="#9ca3af"
+          value={maxMembers}
+          onChangeText={setMaxMembers}
+          keyboardType="numeric"
+        />
+        
+        <TouchableOpacity 
+          style={styles.button}
+          onPress={handleCreateGroup}
+        >
+          <Text style={styles.buttonText}>Create Group</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+function JoinGroupScreen({ navigation }) {
+  const [groupCode, setGroupCode] = useState('');
+
+  const handleJoinGroup = () => {
+    if (!groupCode) {
+      Alert.alert('Error', 'Please enter a group code');
+      return;
+    }
+    Alert.alert('Success', 'Joined group successfully!', [
+      { text: 'OK', onPress: () => navigation.goBack() }
+    ]);
+  };
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Join a Group</Text>
+      <Text style={styles.subtitle}>Enter the group code to join</Text>
+      
+      <View style={styles.formContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Group Code"
+          placeholderTextColor="#9ca3af"
+          value={groupCode}
+          onChangeText={setGroupCode}
+          autoCapitalize="characters"
+        />
+        
+        <TouchableOpacity 
+          style={styles.button}
+          onPress={handleJoinGroup}
+        >
+          <Text style={styles.buttonText}>Join Group</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+function GroupDetailsScreen({ navigation, route }) {
+  const groupId = route.params?.groupId || '1';
+  const group = sampleGroups.find(g => g.id === groupId) || sampleGroups[0];
+  const members = sampleMembers[groupId] || [];
+  const [showMembersModal, setShowMembersModal] = useState(false);
+
+  const handleShowMembers = () => {
+    setShowMembersModal(true);
+  };
+
+  return (
+    <ScrollView style={styles.screenContainer}>
+      <View style={styles.header}>
+        <Text style={styles.screenTitle}>{group.name}</Text>
+      </View>
+      
+      <TouchableOpacity style={styles.card} onPress={handleShowMembers}>
+        <Text style={styles.cardTitle}>Members</Text>
+        <Text style={[styles.cardValue, styles.clickableText]}>{group.members} people</Text>
+        <Text style={styles.tapHint}>Tap to see all members</Text>
+      </TouchableOpacity>
+      
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Contribution Amount</Text>
+        <Text style={styles.cardValue}>₦{group.amount.toLocaleString()}</Text>
+      </View>
+      
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Next Payout</Text>
+        <Text style={styles.cardValue}>{group.nextPayout}</Text>
+      </View>
+      
+      <TouchableOpacity 
+        style={styles.button}
+        onPress={() => navigation.navigate('Payment', { 
+          contributionId: '1', 
+          groupId: group.id, 
+          amount: group.amount 
+        })}
+      >
+        <Text style={styles.buttonText}>Make Contribution</Text>
+      </TouchableOpacity>
+
+      {/* Members Modal */}
+      <Modal
+        visible={showMembersModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowMembersModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Group Members ({group.members})</Text>
+            <Text style={styles.modalSubtitle}>All members in payout order</Text>
+            
+            <ScrollView style={styles.membersListContainer}>
+              {members.map((member) => (
+                <View key={member.id} style={styles.memberListItem}>
+                  <View style={styles.memberListHeader}>
+                    <Text style={styles.memberListName}>{member.name}</Text>
+                    <View style={styles.memberListPosition}>
+                      <Text style={styles.positionNumber}>#{member.position}</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.memberListContribution}>
+                    ₦{member.contributed.toLocaleString()} contributed
+                  </Text>
+                  <View style={styles.memberListStatus}>
+                    <View style={[
+                      styles.statusIndicator,
+                      { backgroundColor: member.status === 'active' ? '#4CAF50' : '#9E9E9E' }
+                    ]} />
+                    <Text style={styles.memberListReliability}>Active Member</Text>
+                  </View>
+                </View>
+              ))}
+            </ScrollView>
+            
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setShowMembersModal(false)}
+            >
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </ScrollView>
+  );
+}
+
+function PaymentScreen({ navigation, route }) {
+  const { contributionId, groupId, amount } = route.params || {};
+  const [paymentMethod, setPaymentMethod] = useState('bank_transfer');
+
+  const handlePayment = () => {
+    Alert.alert('Payment Submitted', 'Your payment has been submitted for verification', [
+      { text: 'OK', onPress: () => navigation.goBack() }
+    ]);
+  };
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Make Payment</Text>
+      <Text style={styles.subtitle}>Amount: ₦{amount?.toLocaleString() || '0'}</Text>
+      
+      <View style={styles.formContainer}>
+        <Text style={styles.cardTitle}>Payment Method</Text>
+        
+        <TouchableOpacity 
+          style={[styles.input, paymentMethod === 'bank_transfer' && styles.selectedOption]}
+          onPress={() => setPaymentMethod('bank_transfer')}
+        >
+          <Text style={styles.profileOptionText}>Bank Transfer</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={[styles.input, paymentMethod === 'card' && styles.selectedOption]}
+          onPress={() => setPaymentMethod('card')}
+        >
+          <Text style={styles.profileOptionText}>Debit Card</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={styles.button}
+          onPress={handlePayment}
+        >
+          <Text style={styles.buttonText}>Proceed to Pay</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+// Main App Tabs
+function MainTabs() {
+  return (
+    <Tab.Navigator
+      screenOptions={{
+        tabBarActiveTintColor: '#3182ce',
+        tabBarInactiveTintColor: 'gray',
+        tabBarStyle: {
+          backgroundColor: 'white',
+          borderTopColor: '#e2e8f0',
+        },
+      }}
+    >
+      <Tab.Screen 
+        name="Dashboard" 
+        component={DashboardScreen}
+        options={{ headerShown: false }}
+      />
+      <Tab.Screen 
+        name="Groups" 
+        component={GroupsScreen}
+        options={{ headerShown: false }}
+      />
+      <Tab.Screen 
+        name="Payments" 
+        component={PaymentsScreen}
+        options={{ headerShown: false }}
+      />
+      <Tab.Screen 
+        name="Profile" 
+        component={ProfileScreen}
+        options={{ headerShown: false }}
+      />
+    </Tab.Navigator>
+  );
+}
+
+export default function App() {
+  return (
+    <NavigationContainer>
+      <Stack.Navigator 
+        initialRouteName="Login"
+        screenOptions={{
+          headerStyle: {
+            backgroundColor: '#3182ce',
+          },
+          headerTintColor: '#fff',
+          headerTitleStyle: {
+            fontWeight: 'bold',
+          },
+        }}
+      >
+        <Stack.Screen 
+          name="Login" 
+          component={LoginScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen 
+          name="Signup" 
+          component={SignupScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen 
+          name="Main" 
+          component={MainTabs}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen 
+          name="CreateGroup" 
+          component={CreateGroupScreen}
+          options={{ title: 'Create Group' }}
+        />
+        <Stack.Screen 
+          name="JoinGroup" 
+          component={JoinGroupScreen}
+          options={{ title: 'Join Group' }}
+        />
+        <Stack.Screen 
+          name="GroupDetails" 
+          component={GroupDetailsScreen}
+          options={{ title: 'Group Details' }}
+        />
+        <Stack.Screen 
+          name="Payment" 
+          component={PaymentScreen}
+          options={{ title: 'Make Payment' }}
+        />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f0f4f8',
+    padding: 20,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#2d3748',
+    marginBottom: 10,
+  },
+  subtitle: {
+    fontSize: 18,
+    color: '#4a5568',
+    marginBottom: 40,
+  },
+  message: {
+    fontSize: 18,
+    color: '#4a5568',
+    textAlign: 'center',
+  },
+  button: {
+    backgroundColor: '#3182ce',
+    paddingHorizontal: 30,
+    paddingVertical: 15,
+    borderRadius: 8,
+    marginVertical: 10,
+    minWidth: 200,
+    alignItems: 'center',
+  },
+  secondaryButton: {
+    backgroundColor: '#2d3748',
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  formContainer: {
+    width: '100%',
+    maxWidth: 300,
+  },
+  input: {
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 8,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    marginVertical: 8,
+    fontSize: 16,
+    color: '#2d3748',
+    placeholderTextColor: '#9ca3af',
+  },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 8,
+    marginVertical: 8,
+  },
+  passwordInput: {
+    flex: 1,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#2d3748',
+  },
+  eyeButton: {
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+  },
+  eyeText: {
+    fontSize: 16,
+  },
+  linkButton: {
+    marginTop: 15,
+    alignItems: 'center',
+  },
+  linkText: {
+    color: '#3182ce',
+    fontSize: 16,
+  },
+  // Screen styles
+  screenContainer: {
+    flex: 1,
+    backgroundColor: '#f8f9fa',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    paddingTop: 40,
+  },
+  screenTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#2d3748',
+  },
+  welcomeText: {
+    fontSize: 16,
+    color: '#718096',
+    marginTop: 5,
+  },
+  card: {
+    backgroundColor: 'white',
+    margin: 10,
+    padding: 20,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  cardTitle: {
+    fontSize: 16,
+    color: '#718096',
+    marginBottom: 5,
+  },
+  cardValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#2d3748',
+  },
+  listItem: {
+    backgroundColor: 'white',
+    padding: 15,
+    marginHorizontal: 10,
+    marginVertical: 5,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  listTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2d3748',
+  },
+  listSubtitle: {
+    fontSize: 16,
+    color: '#4a5568',
+    marginTop: 4,
+  },
+  listDetail: {
+    fontSize: 14,
+    color: '#718096',
+    marginTop: 4,
+  },
+  paidStatus: {
+    color: '#38a169',
+  },
+  pendingStatus: {
+    color: '#ed8936',
+  },
+  smallButton: {
+    backgroundColor: '#3182ce',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  smallButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  profileCard: {
+    backgroundColor: 'white',
+    margin: 20,
+    padding: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  profileName: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#2d3748',
+  },
+  profileEmail: {
+    fontSize: 16,
+    color: '#718096',
+    marginTop: 5,
+  },
+  profileOption: {
+    backgroundColor: 'white',
+    marginHorizontal: 20,
+    marginVertical: 5,
+    padding: 15,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  profileOptionText: {
+    fontSize: 16,
+    color: '#2d3748',
+  },
+  logoutOption: {
+    marginTop: 20,
+  },
+  logoutText: {
+    color: '#e53e3e',
+    fontWeight: 'bold',
+  },
+  headerButtons: {
+    flexDirection: 'row',
+  },
+  selectedOption: {
+    backgroundColor: '#e2e8f0',
+    borderColor: '#3182ce',
+    borderWidth: 2,
+  },
+  // Members Modal Styles
+  clickableText: {
+    textDecorationLine: 'underline',
+    color: '#3182ce',
+  },
+  tapHint: {
+    fontSize: 12,
+    color: '#718096',
+    marginTop: 4,
+    fontStyle: 'italic',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#ffffff',
+    margin: 20,
+    borderRadius: 12,
+    padding: 20,
+    width: '90%',
+    maxHeight: '80%',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#2d3748',
+    marginBottom: 8,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#718096',
+    marginBottom: 20,
+  },
+  membersListContainer: {
+    maxHeight: 400,
+    marginVertical: 15,
+  },
+  memberListItem: {
+    backgroundColor: '#f8f9fa',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#3182ce',
+  },
+  memberListHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  memberListName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#2d3748',
+    flex: 1,
+  },
+  memberListPosition: {
+    backgroundColor: '#3182ce',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  positionNumber: {
+    fontSize: 12,
+    color: '#ffffff',
+    fontWeight: 'bold',
+  },
+  memberListContribution: {
+    fontSize: 14,
+    color: '#718096',
+    marginBottom: 4,
+  },
+  memberListStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statusIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 6,
+  },
+  memberListReliability: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#4CAF50',
+  },
+  closeButton: {
+    backgroundColor: '#3182ce',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  closeButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  // Dashboard Group Card Styles
+  sectionHeader: {
+    paddingHorizontal: 20,
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#2d3748',
+  },
+  groupCard: {
+    backgroundColor: 'white',
+    marginHorizontal: 15,
+    marginVertical: 8,
+    padding: 16,
+    borderRadius: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    borderLeftWidth: 4,
+    borderLeftColor: '#3182ce',
+  },
+  groupInfo: {
+    flex: 1,
+  },
+  groupName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2d3748',
+    marginBottom: 4,
+  },
+  groupMembers: {
+    fontSize: 14,
+    color: '#718096',
+    marginBottom: 2,
+  },
+  groupAmount: {
+    fontSize: 16,
+    color: '#3182ce',
+    fontWeight: '600',
+  },
+  groupStatus: {
+    alignItems: 'flex-end',
+  },
+  nextPayout: {
+    fontSize: 14,
+    color: '#718096',
+    marginBottom: 4,
+  },
+});

@@ -1,0 +1,172 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isGroupMember(groupId) {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/group_members/{memberId}) &&
+             get(/databases/$(database)/documents/group_members/{memberId}).data.group_id == groupId &&
+             get(/databases/$(database)/documents/group_members/{memberId}).data.user_id == request.auth.uid &&
+             get(/databases/$(database)/documents/group_members/{memberId}).data.status == 'active';
+    }
+    
+    function isGroupAdmin(groupId) {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/groups/$(groupId)) &&
+             get(/databases/$(database)/documents/groups/$(groupId)).data.admin_id == request.auth.uid;
+    }
+    
+    function hasValidContributionData() {
+      return request.resource.data.keys().hasAll(['groupId', 'userId', 'amount', 'dueDate', 'status', 'cycle']) &&
+             request.resource.data.amount is number &&
+             request.resource.data.amount > 0 &&
+             request.resource.data.status in ['pending', 'paid', 'overdue'];
+    }
+    
+    function hasValidGroupData() {
+      return request.resource.data.keys().hasAll(['name', 'description', 'adminId', 'members', 'contributionAmount', 'contributionFrequency', 'status']) &&
+             request.resource.data.name is string &&
+             request.resource.data.name.size() > 0 &&
+             request.resource.data.contributionAmount is number &&
+             request.resource.data.contributionAmount > 0 &&
+             request.resource.data.status in ['active', 'completed', 'paused'] &&
+             request.resource.data.contributionFrequency in ['daily', 'weekly', 'monthly'];
+    }
+
+    // Users collection
+    match /users/{userId} {
+      // Users can read and write their own profile
+      allow read, write: if isOwner(userId);
+      
+      // Allow reading public user info for group members
+      allow read: if isAuthenticated();
+    }
+
+    // Groups collection
+    match /groups/{groupId} {
+      // Group members can read group info
+      allow read: if isAuthenticated() && (isGroupMember(groupId) || isGroupAdmin(groupId));
+      
+      // Only authenticated users can create groups
+      allow create: if isAuthenticated() && 
+                       request.resource.data.admin_id == request.auth.uid;
+      
+      // Only group admin can update group settings
+      allow update: if isGroupAdmin(groupId);
+      
+      // Only group admin can delete group
+      allow delete: if isGroupAdmin(groupId);
+    }
+
+    // Group Members collection
+    match /group_members/{memberId} {
+      // Group members can read membership info
+      allow read: if isAuthenticated() && 
+                     (isGroupMember(resource.data.group_id) || isGroupAdmin(resource.data.group_id));
+      
+      // Group admin can add members
+      allow create: if isAuthenticated() && 
+                       isGroupAdmin(request.resource.data.group_id);
+      
+      // Group admin can update member status
+      allow update: if isGroupAdmin(resource.data.group_id);
+      
+      // Group admin can remove members
+      allow delete: if isGroupAdmin(resource.data.group_id);
+    }
+
+    // Contributions collection
+    match /contributions/{contributionId} {
+      // Group members can read contributions for their groups
+      allow read: if isAuthenticated() && 
+                     isGroupMember(resource.data.groupId);
+      
+      // Only authenticated users can create contributions with valid data
+      allow create: if isAuthenticated() && 
+                       hasValidContributionData() &&
+                       isGroupMember(request.resource.data.groupId);
+      
+      // Users can update their own contributions or group admin can update any
+      allow update: if isAuthenticated() && 
+                       hasValidContributionData() &&
+                       (isOwner(resource.data.userId) || isGroupAdmin(resource.data.groupId));
+      
+      // Only group admin can delete contributions
+      allow delete: if isGroupAdmin(resource.data.groupId);
+    }
+
+    // Payouts collection
+    match /payouts/{payoutId} {
+      // Group members can read payouts for their groups
+      allow read: if isAuthenticated() && 
+                     isGroupMember(resource.data.groupId);
+      
+      // Only group admin can create payouts
+      allow create: if isAuthenticated() && 
+                       isGroupAdmin(request.resource.data.groupId) &&
+                       request.resource.data.keys().hasAll(['groupId', 'recipientId', 'amount', 'cycle', 'status', 'scheduledDate']) &&
+                       request.resource.data.amount is number &&
+                       request.resource.data.amount > 0 &&
+                       request.resource.data.status in ['pending', 'paid', 'processing'];
+      
+      // Only group admin can update payouts
+      allow update: if isGroupAdmin(resource.data.groupId);
+      
+      // Only group admin can delete payouts
+      allow delete: if isGroupAdmin(resource.data.groupId);
+    }
+
+    // Notifications collection
+    match /notifications/{notificationId} {
+      // Users can only read their own notifications
+      allow read: if isAuthenticated() && 
+                     isOwner(resource.data.userId);
+      
+      // System can create notifications (server-side)
+      allow create: if isAuthenticated();
+      
+      // Users can update their own notifications (mark as read)
+      allow update: if isAuthenticated() && 
+                       isOwner(resource.data.userId) &&
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+      
+      // Users can delete their own notifications
+      allow delete: if isAuthenticated() && 
+                       isOwner(resource.data.userId);
+    }
+
+    // Transaction logs (for audit trail)
+    match /transactionLogs/{logId} {
+      // Only allow reads for involved parties
+      allow read: if isAuthenticated() && 
+                     (isOwner(resource.data.fromUserId) || 
+                      isOwner(resource.data.toUserId) ||
+                      isGroupAdmin(resource.data.groupId));
+      
+      // Only system can create transaction logs
+      allow create: if false; // Server-side only
+      
+      // No updates or deletes allowed
+      allow update, delete: if false;
+    }
+
+    // Admin operations (for app administrators)
+    match /adminLogs/{logId} {
+      // No direct access to admin logs
+      allow read, write: if false;
+    }
+
+    // Default deny all other collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
